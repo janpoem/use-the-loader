@@ -13,10 +13,16 @@
   "files": [
     "dist"
   ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "engines": {
     "node": ">= 16.0.0"
   },
   "author": "Jiankai Zeng <janpoem@163.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/janpoem/use-the-loader.git"
+  },
   "license": "MIT",
   "dependencies": {
     "just-compare": "^2.2.2"
