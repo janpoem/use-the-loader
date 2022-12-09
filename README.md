@@ -60,7 +60,7 @@ function AnyComponent({ id }: AnyComponentProps) {
   );
 
   // 组件输出 ...
-  return (<div>AnyComponent</div>)
+  return <div>AnyComponent</div>;
 }
 ```
 
@@ -139,7 +139,7 @@ function AnyComponent({ id }: AnyComponentProps) {
   });
 
   // 组件输出 ...
-  return (<div>AnyComponent</div>)
+  return <div>AnyComponent</div>;
 }
 ```
 
