@@ -1,0 +1,50 @@
+{
+  "name": "use-the-loader",
+  "version": "1.0.0",
+  "description": "Another React loader hook",
+  "scripts": {
+    "dev:start": "ts-node src/index.ts",
+    "test": "mocha",
+    "coverage": "nyc npm run test",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
+    "build": "npm run lint && npm run test && tsc"
+  },
+  "engines": {
+    "node": ">= 16.0.0"
+  },
+  "author": "Jiankai Zeng <janpoem@163.com>",
+  "license": "MIT",
+  "dependencies": {
+    "tslib": "^2.4.1",
+    "@swc/helpers": "^0.4.14",
+    "just-compare": "^2.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "typescript": "^4.9.3",
+    "eslint": "^8",
+    "@typescript-eslint/parser": "^5",
+    "@typescript-eslint/eslint-plugin": "^5",
+    "eslint-plugin-react": "^7",
+    "eslint-plugin-react-hooks": "^4",
+    "ts-node": "^10.9.1",
+    "nodemon": "^2",
+    "@types/nodemon": "^1.19.2",
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "^1.3.20",
+    "regenerator-runtime": "^0.13.11",
+    "mocha": "^10",
+    "@types/mocha": "^10",
+    "chai": "^4",
+    "@types/chai": "^4",
+    "react": "^18",
+    "react-dom": "^18",
+    "@testing-library/react": "^13",
+    "inject-jsdom": "^1",
+    "nyc": "^15.1.0"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0  || ^17.0.0 || ^18.0.0",
+    "react-dom": "^16.8.0  || ^17.0.0 || ^18.0.0"
+  }
+}
