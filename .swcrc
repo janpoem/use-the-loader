@@ -9,7 +9,7 @@
     "target": "es2019",
     "transform": null,
     "loose": true,
-    "externalHelpers": true,
+    "externalHelpers": false,
     "keepClassNames": true
   },
   "module": {

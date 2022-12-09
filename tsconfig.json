@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "importHelpers": true,
+    "importHelpers": false,
     "pretty": true,
     "rootDir": "src",
     "outDir": "dist",
