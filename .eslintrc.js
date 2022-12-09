@@ -20,6 +20,7 @@ module.exports = {
   },
   ignorePatterns: [
     'node_modules',
+    'dist'
   ],
   rules         : {
     '@typescript-eslint/ban-ts-comment'    : [
