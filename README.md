@@ -1,5 +1,9 @@
 # use-the-loader
 
+[![version](https://img.shields.io/npm/v/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
+[![dw](https://img.shields.io/npm/dw/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
+
+
 又又又一个 React 的数据加载钩子。
 
 Another React loader hook.
@@ -75,6 +79,7 @@ function AnyComponent({ id }: AnyComponentProps) {
 
 `useTheLoader` 提供：
 
+- 泛型设计，准确定位（编辑器可智能识别，自动提示） `loader`、`loader` 参数，`loader` 的 `Promise<infer T>` 
 - 根据 `params` 变化，自动 reload
 - 可控 `canLoad(params)`
 - 前置 `beforeLoad(params)` ，以修正实际 loader 的参数
