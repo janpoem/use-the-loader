@@ -1,6 +1,6 @@
 {
   "name": "use-the-loader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Another React loader hook.",
   "keywords": ["loader", "data-loader", "loader-hook", "hook", "params", "compare"],
   "scripts": {
@@ -8,7 +8,8 @@
     "test": "mocha",
     "coverage": "nyc npm run test",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "build": "npm run lint && npm run test && tsc"
+    "build": "npm run lint && npm run test && npm run rollup",
+    "rollup": "rollup -c --bundleConfigAsCjs"
   },
   "files": [
     "dist"
@@ -47,9 +48,14 @@
     "@types/chai": "^4",
     "react": "^18",
     "react-dom": "^18",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "@testing-library/react": "^13",
     "inject-jsdom": "^1",
-    "nyc": "^15.1.0"
+    "nyc": "^15.1.0",
+    "rollup": "^3.7.2",
+    "rollup-plugin-ts": "^3.0.2",
+    "@rollup/plugin-commonjs": "^23"
   },
   "peerDependencies": {
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0",

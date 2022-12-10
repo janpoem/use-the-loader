@@ -2,10 +2,10 @@ import { inject } from 'inject-jsdom';
 import { renderHook, act } from '@testing-library/react';
 import { assert } from 'chai';
 import { useState } from 'react';
-import { useTheLoader } from './index';
+import { useTheLoader } from './useTheLoader';
 
 inject({
-  html: '<html><body><div id="test" data-value="test"></div></body></html>',
+  html: '<html lang="en"><body><div id="test" data-value="test"></div></body></html>',
   url : 'http://localhost',
 });
 
