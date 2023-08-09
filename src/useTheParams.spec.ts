@@ -1,3 +1,4 @@
+import 'mocha';
 import { inject } from 'inject-jsdom';
 import { renderHook, act } from '@testing-library/react';
 import { assert } from 'chai';

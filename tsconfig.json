@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2019",
     "module": "CommonJS",
+    "moduleResolution": "node",
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
@@ -9,7 +10,6 @@
     "emitDecoratorMetadata": true,
     "importHelpers": false,
     "pretty": true,
-    "rootDir": "src",
     "outDir": "dist",
     "baseUrl": "./",
     "types": [
