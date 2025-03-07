@@ -1,6 +1,6 @@
 {
   "name": "use-the-loader",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Another React loader hook.",
   "keywords": ["loader", "data-loader", "loader-hook", "hook", "params", "compare"],
   "scripts": {
@@ -14,7 +14,8 @@
   "files": [
     "dist"
   ],
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
     "node": ">= 16.0.0"
@@ -29,7 +30,7 @@
     "just-compare": "^2.3.0"
   },
   "devDependencies": {
-    "@types/node": "^18.11.9",
+    "@types/node": "^20.17.23",
     "typescript": "^5.1.6",
     "eslint": "^8.46.0",
     "@typescript-eslint/parser": "^6.3.0",
@@ -51,10 +52,11 @@
     "@testing-library/react": "^14.0.0",
     "inject-jsdom": "^1",
     "nyc": "^15.1.0",
-    "rollup": "^3.28.0",
-    "rollup-plugin-ts": "^3.4.4",
-    "@rollup/plugin-commonjs": "^25.0.3",
-    "@rollup/plugin-node-resolve": "^15.1.0"
+    "rollup": "^4.34.9",
+    "rollup-plugin-swc3": "^0.12.1",
+    "rollup-plugin-dts": "^6.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.0"
   },
   "peerDependencies": {
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0",

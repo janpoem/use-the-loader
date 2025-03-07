@@ -3,7 +3,6 @@
 [![version](https://img.shields.io/npm/v/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 [![dw](https://img.shields.io/npm/dw/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 
-
 又又又一个 React 的数据加载钩子。
 
 Another React loader hook.
@@ -149,3 +148,12 @@ function AnyComponent({ id }: AnyComponentProps) {
 ```
 
 注意：当 loader 处于 loading 状态（未加载完毕）时，params 变化不会触发数据 reload。
+
+## 更新日志
+
+### 1.0.3
+
+- 增加 enum `LoaderState`
+- 部分流程优化
+- 增加导出 `esm` ，调整 `esm => .js`、`cjs => .cjs` 后缀格式
+- 更新 rollup 编译环境，改用 `rollup-plugin-swc3` 和 `rollup-plugin-dts`

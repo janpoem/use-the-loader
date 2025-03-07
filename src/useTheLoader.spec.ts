@@ -1,9 +1,9 @@
 import 'mocha';
-import { inject } from 'inject-jsdom';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { assert } from 'chai';
+import { inject } from 'inject-jsdom';
 import { useState } from 'react';
-import { useTheLoader } from './useTheLoader';
+import { LoaderState, useTheLoader } from './useTheLoader';
 
 inject({
   html: '<html lang="en"><body><div id="test" data-value="test"></div></body></html>',
@@ -47,7 +47,7 @@ describe('useTheLoader', function () {
         canLoad: false,
       }));
 
-      assert.equal(result.current.state, 'init');
+      assert.equal(result.current.state, LoaderState.init);
       assert.equal(result.current.data, undefined);
       assert.deepEqual(result.current.params, [query]);
     });
@@ -66,7 +66,7 @@ describe('useTheLoader', function () {
           setCanLoad,
         };
       });
-      assert.equal(result.current.state, 'init');
+      assert.equal(result.current.state, LoaderState.init);
       assert.equal(result.current.data, undefined);
       assert.deepEqual(result.current.params, [query]);
 
@@ -74,7 +74,7 @@ describe('useTheLoader', function () {
         result.current.setCanLoad(true);
       });
 
-      assert.equal(result.current.state, 'loading');
+      assert.equal(result.current.state, LoaderState.loading);
     });
 
     it('canLoad params change', function () {
@@ -90,13 +90,13 @@ describe('useTheLoader', function () {
         };
       });
 
-      assert.equal(result.current.state, 'init');
+      assert.equal(result.current.state, LoaderState.init);
 
       act(() => {
         result.current.setType('ok');
       });
 
-      assert.equal(result.current.state, 'loading');
+      assert.equal(result.current.state, LoaderState.loading);
     });
 
     it('canLoad params#2 change', function (done) {
@@ -114,16 +114,16 @@ describe('useTheLoader', function () {
         };
       });
 
-      assert.equal(result.current.state, 'init');
+      assert.equal(result.current.state, LoaderState.init);
 
       act(() => {
         result.current.setData(changedData);
       });
 
-      assert.equal(result.current.state, 'loading');
+      assert.equal(result.current.state, LoaderState.loading);
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'loaded');
+        assert.equal(result.current.state,LoaderState.loaded);
         assert.deepEqual(result.current.data, { query, data: changedData });
         assert.deepEqual(result.current.params, [query, changedData]);
         done();
@@ -141,7 +141,7 @@ describe('useTheLoader', function () {
       }));
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'loaded');
+        assert.equal(result.current.state, LoaderState.loaded);
         assert.deepEqual(result.current.data, { query, data: undefined });
         assert.deepEqual(result.current.params, [query]);
         done();
@@ -164,7 +164,7 @@ describe('useTheLoader', function () {
       });
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'loaded');
+        assert.equal(result.current.state, LoaderState.loaded);
         assert.deepEqual(result.current.data, { query: { id: basicId }, data: undefined });
         assert.deepEqual(result.current.params, [{ id: basicId }]);
 
@@ -176,7 +176,7 @@ describe('useTheLoader', function () {
         assert.equal(result.current.reloading, true);
 
         setTimeout(() => {
-          assert.equal(result.current.state, 'loaded');
+          assert.equal(result.current.state, LoaderState.loaded);
           assert.equal(result.current.loadTimes, 2);
           assert.deepEqual(result.current.data, { query: { id: changedId }, data: undefined });
           assert.deepEqual(result.current.params, [{ id: changedId }]);
@@ -194,7 +194,7 @@ describe('useTheLoader', function () {
       }));
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'error');
+        assert.equal(result.current.state, LoaderState.error);
         assert.deepEqual(result.current.error, err);
         done();
       }, itDurationSeconds);
@@ -209,7 +209,7 @@ describe('useTheLoader', function () {
       }));
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'error');
+        assert.equal(result.current.state, LoaderState.error);
         assert.deepEqual(result.current.error, new Error(err));
         done();
       }, itDurationSeconds);
@@ -227,7 +227,7 @@ describe('useTheLoader', function () {
       }));
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'loaded');
+        assert.equal(result.current.state, LoaderState.loaded);
         // 基础请求的参数，仍然是 query
         assert.deepEqual(result.current.params, [query]);
         // 但返回的数据结果 query 加上了 beforeLoad 的数据
@@ -245,7 +245,7 @@ describe('useTheLoader', function () {
       }));
 
       setTimeout(() => {
-        assert.equal(result.current.state, 'loaded');
+        assert.equal(result.current.state, LoaderState.loaded);
         // 基础请求的参数，仍然是 query
         assert.deepEqual(result.current.params, [query]);
         // 但返回的数据结果 query 加上了 beforeLoad 的数据

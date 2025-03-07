@@ -1,29 +1,68 @@
-import fs from 'fs';
-import { resolve } from 'path';
-import ts from 'rollup-plugin-ts';
+import * as fs from 'node:fs';
+import { resolve, join } from 'node:path';
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { dts } from 'rollup-plugin-dts';
+import { swc } from 'rollup-plugin-swc3';
 
 const outputDir = resolve('./dist');
 
 const rmdir = (dir) => fs.existsSync(dir) && fs.statSync(dir).isDirectory() && fs.rmSync(dir, { recursive: true });
 
-export default {
-  input   : 'src/index.ts',
-  output  : [
+export default [{
+  input: 'src/index.ts',
+  output: [
     {
-      file  : `${outputDir}/index.js`,
-      format: 'cjs'
-    }
+      file: `${outputDir}/index.cjs`,
+      format: 'cjs',
+    },
+    {
+      file: `${outputDir}/index.js`,
+      format: 'es',
+      exports: 'named',
+    },
   ],
-  plugins : [
+  plugins: [
     rmdir(outputDir),
-    ts(),
+    swc({
+      include: /\.[mc]?[jt]sx?$/,
+      exclude: /node_modules/,
+      tsconfig: 'tsconfig.json',
+      'jsc': {
+        'parser': {
+          'syntax': 'typescript',
+          'decorators': true,
+          'dynamicImport': false,
+        },
+        'baseUrl': './',
+        'target': 'es2022',
+        'transform': null,
+        'loose': true,
+        'externalHelpers': false,
+        'keepClassNames': true,
+      },
+      // 'module': {
+      //   'type': 'commonjs',
+      //   'strict': false,
+      //   'strictMode': true,
+      //   'lazy': false,
+      //   'noInterop': false,
+      // },
+    }),
     nodeResolve(),
     commonjs({
-      include     : ['node_modules/**'],
-      ignoreGlobal: false
-    })
+      extensions: ['.node', '.cjs', '.js', '.mjs'],
+    }),
   ],
-  external: ['react']
-};
+  external: ['react'],
+}, {
+  input: 'src/index.ts',
+  output: [
+    {
+      file: join(outputDir, 'index.d.ts'),
+      format: 'es',
+    },
+  ],
+  plugins: [dts()],
+  external: ['react'],
+}];
