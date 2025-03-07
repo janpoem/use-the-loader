@@ -3,69 +3,44 @@
 [![version](https://img.shields.io/npm/v/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 [![dw](https://img.shields.io/npm/dw/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 
-又又又双双叒叕一个 React 的数据加载钩子。
+又又又又双双双叒叒叕一个 React 的数据加载钩子。
 
-Another React loader hook.
+**use-the-loader** 的设计概念是：将任何符合 `(...params: T) => Promise<R>` 描述的 JS 函数视作一个 `loader`，并观测 `params` 的变化以触发 loader 自动重载。
+
+- `loader` 函数根据实现函数，进行泛型推断
+- 其中 `...params: T` 将抽取为参数元祖（Tuple）
+
+```tsx
+import { useState } from 'react';
+import { useTheLoader } from './useTheLoader';
+
+// 输入参数：为元祖 [string, number]，因为 TS 的局限性，这个元祖是无法动态声明的，但通过泛型推断可以得到
+// 返回结果：Promise<{id: string, version?: number}>
+const fetchData = (id: string, version?: number) => Promise.resolve({
+  id,
+  version,
+});
+
+function TestComponent({ version }: { version?: number }) {
+  const [id, setId] = useState('abc');
+
+  // 这里不需要额外的泛型指定，自动根据 fetchData 函数的推导推断出 params 的类型和 data 的类型
+  // params 必须符合 [string, number]，否则 ts-check 将会报错
+  // data 的推导类型则是 {id: string, version?: number} | undefined
+  const { data } = useTheLoader({
+    loader: fetchData,
+    params: [id, version],
+  });
+
+  return <div>{data && JSON.stringify(data)}</div>;
+}
+```
+
 
 该库提供两个基础的 hooks：
 
-- useTheParams - 将多个任意的 prop 、state 、变量，构建成一个参数组合，并跟踪该参数的变化。
 - useTheLoader - 关注由 params 变化触发的数据加载（不限制如何实现 loader）。
-
-## useTheParams
-
-本来 React 的 `useState` 是一个十分简单且美妙的东西，我们总是乐于从基础的 state 去构建组件或 hook。
-
-但不可避免的是多个属性（prop）或state，需要做组合，成为一个数组或object，再关注这个组合的变化，去触发下一层的操作。
-
-这时候基于 `useEffect`，总是力有不逮（浅层比较深度不足，逻辑越做越复杂）。
-
-这时候你可以选择诸如 `useReducer`, `Redux` 或 `Mobx` 等等，不过不管用哪个，你的代码都将变得越发庞大，需要学习的东西也越多（需要掌控和制定的规范也越来越多）。
-
-回到问题的本质，我们需要的，只是一个组合追踪而已，为什么要让事情变复杂？
-
-所以就有了这个 `useTheParams`，当你在为各种各样的 prop、state 疲于奔命时，用 `useTheParams` 就对了，一下子全解决了。
-
-**主要特性**
-
-- 泛型设计 - `useTheParams` 不锁定到底是数组还是 object，还是一个字符串，你传入什么，类型就是什么。
-- 可自定义 `compare` 方法，默认使用了 [just-compare](https://www.npmjs.com/package/just-compare)
-- `onChange` 事件
-
-**基础用法**
-
-```typescript jsx
-import { useSearch } from '@tanstack/react-location';
-import { useState } from 'react';
-import { useTheParams } from 'use-the-loader';
-
-type AnyComponentProps = {
-  id?: string,
-}
-
-function AnyComponent({ id }: AnyComponentProps) {
-  // Router 的 url 查询字符串变量
-  const { page, search } = useSearch();
-  // 组件内 state
-  const [type, setType] = useState('user');
-
-  const [params, setParams] = useTheParams(
-    // 构成 params 的数据，
-    // 当这些数据变动时，将自动触发 params onChange
-    { id, type, page, search },
-    {
-      onChange: (p) => {
-        // 当 params 变化时触发
-      },
-      // 自定义比较函数
-      compare: (v1, v2) => v1 === v2,
-    }
-  );
-
-  // 组件输出 ...
-  return <div>AnyComponent</div>;
-}
-```
+- useTheParams - 将多个任意的 prop 、state 、变量，构建成一个参数组合，并跟踪该参数的变化。
 
 ## useTheLoader
 
@@ -78,7 +53,7 @@ function AnyComponent({ id }: AnyComponentProps) {
 
 `useTheLoader` 提供：
 
-- 泛型设计，准确定位（编辑器可智能识别，自动提示） `loader`、`loader` 参数，`loader` 的 `Promise<infer T>` 
+- 泛型设计，准确定位（编辑器可智能识别，自动提示） `loader`、`loader` 参数，`loader` 的 `Promise<infer T>`
 - 根据 `params` 变化，自动 reload
 - 可控 `canLoad(params)`
 - 前置 `beforeLoad(params)` ，以修正实际 loader 的参数
@@ -148,6 +123,62 @@ function AnyComponent({ id }: AnyComponentProps) {
 ```
 
 注意：当 loader 处于 loading 状态（未加载完毕）时，params 变化不会触发数据 reload。
+
+## useTheParams
+
+本来 React 的 `useState` 是一个十分简单且美妙的东西，我们总是乐于从基础的 state 去构建组件或 hook。
+
+但不可避免的是多个属性（prop）或state，需要做组合，成为一个数组或object，再关注这个组合的变化，去触发下一层的操作。
+
+这时候基于 `useEffect`，总是力有不逮（浅层比较深度不足，逻辑越做越复杂）。
+
+这时候你可以选择诸如 `useReducer`, `Redux` 或 `Mobx` 等等，不过不管用哪个，你的代码都将变得越发庞大，需要学习的东西也越多（需要掌控和制定的规范也越来越多）。
+
+回到问题的本质，我们需要的，只是一个组合追踪而已，为什么要让事情变复杂？
+
+所以就有了这个 `useTheParams`，当你在为各种各样的 prop、state 疲于奔命时，用 `useTheParams` 就对了，一下子全解决了。
+
+**主要特性**
+
+- 泛型设计 - `useTheParams` 不锁定到底是数组还是 object，还是一个字符串，你传入什么，类型就是什么。
+- 可自定义 `compare` 方法，默认使用了 [just-compare](https://www.npmjs.com/package/just-compare)
+- `onChange` 事件
+
+**基础用法**
+
+```typescript jsx
+import { useSearch } from '@tanstack/react-location';
+import { useState } from 'react';
+import { useTheParams } from 'use-the-loader';
+
+type AnyComponentProps = {
+  id?: string,
+}
+
+function AnyComponent({ id }: AnyComponentProps) {
+  // Router 的 url 查询字符串变量
+  const { page, search } = useSearch();
+  // 组件内 state
+  const [type, setType] = useState('user');
+
+  const [params, setParams] = useTheParams(
+    // 构成 params 的数据，
+    // 当这些数据变动时，将自动触发 params onChange
+    { id, type, page, search },
+    {
+      onChange: (p) => {
+        // 当 params 变化时触发
+      },
+      // 自定义比较函数
+      compare: (v1, v2) => v1 === v2,
+    }
+  );
+
+  // 组件输出 ...
+  return <div>AnyComponent</div>;
+}
+```
+
 
 ## 更新日志
 
