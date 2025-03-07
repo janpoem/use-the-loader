@@ -5,6 +5,8 @@
 
 又又又又双双双叒叒叕一个 React 的数据加载钩子。
 
+## 设计理念
+
 **use-the-loader** 的设计概念是：将任何符合 `(...params: T) => Promise<R>` 描述的 JS 函数视作一个 `loader`，并观测 `params` 的变化以触发 loader 自动重载。
 
 - `loader` 函数根据实现函数，进行泛型推断
@@ -36,6 +38,17 @@ function TestComponent({ version }: { version?: number }) {
 }
 ```
 
+接口实现的复杂性，不应该体现在 hooks 或者 view（组件代码） 层面，而应该由实现接口的函数负责。
+特别强烈批判诸如 `redux-toolkit` `useQuery` 搞的各种神神怪怪的机制和配置，
+让 hooks 或者 view（组件代码） 层面的代码变得越发复杂和臃肿。
+
+实际项目（经验）里，接口实现函数（类），我们可以有单独的单元测试、接口测试（或通过 open-api 生成），确保可用性和健壮性。
+
+**use-the-loader** 旨在用很薄一层的逻辑代码，将任何 JS 函数视作 loader ，并轻松用于 hooks 或者 view（组件代码）。
+
+用更哲学的表述是：我们将任何 JS 异步函数抽象成 loader 以使用。
+
+> 大道至简，各方妖孽速速退散
 
 该库提供两个基础的 hooks：
 
