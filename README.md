@@ -3,7 +3,7 @@
 [![version](https://img.shields.io/npm/v/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 [![dw](https://img.shields.io/npm/dw/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 
-又又又一个 React 的数据加载钩子。
+又又又双双叒叕一个 React 的数据加载钩子。
 
 Another React loader hook.
 
