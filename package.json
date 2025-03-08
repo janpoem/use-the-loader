@@ -1,6 +1,6 @@
 {
   "name": "use-the-loader",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Another React loader hook.",
   "keywords": ["loader", "data-loader", "loader-hook", "hook", "params", "compare"],
   "scripts": {
@@ -27,11 +27,11 @@
   },
   "license": "MIT",
   "dependencies": {
-    "just-compare": "^2.3.0"
+
   },
   "devDependencies": {
     "@types/node": "^20.17.23",
-    "typescript": "^5.1.6",
+    "typescript": "^5",
     "eslint": "^8.46.0",
     "@typescript-eslint/parser": "^6.3.0",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
@@ -56,10 +56,10 @@
     "rollup-plugin-swc3": "^0.12.1",
     "rollup-plugin-dts": "^6.1.1",
     "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-node-resolve": "^16.0.0"
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "just-compare": "^2.3.0"
   },
   "peerDependencies": {
-    "react": "^16.8.0  || ^17.0.0 || ^18.0.0",
-    "react-dom": "^16.8.0  || ^17.0.0 || ^18.0.0"
+    "react": "^16.8.0  || ^17.0.0 || ^18.0.0 || ^19.0.0"
   }
 }
