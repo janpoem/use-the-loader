@@ -33,14 +33,7 @@ export default [
         exclude: /node_modules/,
         tsconfig: 'tsconfig.json',
         jsc: {
-          parser: {
-            syntax: 'typescript',
-            decorators: true,
-          },
-          target: 'es2022',
-          loose: true,
-          externalHelpers: false,
-          keepClassNames: true,
+          target: 'es2020',
         },
         // 'module': {
         //   'type': 'commonjs',

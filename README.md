@@ -202,6 +202,10 @@ function AnyComponent({ id }: AnyComponentProps) {
 
 ## 更新日志
 
+### 1.0.6
+
+- 切换回 `just-compare`
+
 ### 1.0.5
 
 - 更改项目构建环境为 bun.js

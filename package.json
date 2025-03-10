@@ -1,6 +1,6 @@
 {
   "name": "use-the-loader",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Another React loader hook.",
   "keywords": [
     "loader",
@@ -24,9 +24,6 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "engines": {
-    "node": ">= 16.0.0"
-  },
   "author": "Jiankai Zeng <janpoem@163.com>",
   "repository": {
     "type": "git",
@@ -34,7 +31,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "react-fast-compare": "^3.2.2"
+    "just-compare": "^2.3.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
