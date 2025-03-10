@@ -7,7 +7,8 @@
 
 ## 设计理念
 
-**use-the-loader** 的设计概念是：将任何符合 `(...params: T) => Promise<R>` 描述的 JS 函数视作一个 `loader`，并观测 `params` 的变化以触发 loader 自动重载。
+**use-the-loader** 的设计概念是：将任何符合 `(...params: T) => Promise<R>` 描述的
+JS 函数视作一个 `loader`，并观测 `params` 的变化以触发 loader 自动重载。
 
 - `loader` 函数根据实现函数，进行泛型推断
 - 其中 `...params: T` 将抽取为参数元祖（Tuple）
@@ -42,9 +43,11 @@ function TestComponent({ version }: { version?: number }) {
 特别强烈批判诸如 `redux-toolkit` `useQuery` 搞的各种神神怪怪的机制和配置，
 让 hooks 或者 view（组件代码） 层面的代码变得越发复杂和臃肿。
 
-实际项目（经验）里，接口实现函数（类），我们可以有单独的单元测试、接口测试（或通过 open-api 生成），确保可用性和健壮性。
+实际项目（经验）里，接口实现函数（类），我们可以有单独的单元测试、接口测试（或通过
+open-api 生成），确保可用性和健壮性。
 
-**use-the-loader** 旨在用很薄一层的逻辑代码，将任何 JS 函数视作 loader ，并轻松用于 hooks 或者 view（组件代码）。
+**use-the-loader** 旨在用很薄一层的逻辑代码，将任何 JS 函数视作 loader ，并轻松用于
+hooks 或者 view（组件代码）。
 
 用更哲学的表述是：我们将任何 JS 异步函数抽象成 loader 以使用。
 
@@ -66,7 +69,8 @@ function TestComponent({ version }: { version?: number }) {
 
 `useTheLoader` 提供：
 
-- 泛型设计，准确定位（编辑器可智能识别，自动提示） `loader`、`loader` 参数，`loader` 的 `Promise<infer T>`
+- 泛型设计，准确定位（编辑器可智能识别，自动提示） `loader`、`loader` 参数，`loader` 的
+  `Promise<infer T>`
 - 根据 `params` 变化，自动 reload
 - 可控 `canLoad(params)`
 - 前置 `beforeLoad(params)` ，以修正实际 loader 的参数
@@ -139,22 +143,26 @@ function AnyComponent({ id }: AnyComponentProps) {
 
 ## useTheParams
 
-本来 React 的 `useState` 是一个十分简单且美妙的东西，我们总是乐于从基础的 state 去构建组件或 hook。
+本来 React 的 `useState` 是一个十分简单且美妙的东西，我们总是乐于从基础的 state
+去构建组件或 hook。
 
 但不可避免的是多个属性（prop）或state，需要做组合，成为一个数组或object，再关注这个组合的变化，去触发下一层的操作。
 
 这时候基于 `useEffect`，总是力有不逮（浅层比较深度不足，逻辑越做越复杂）。
 
-这时候你可以选择诸如 `useReducer`, `Redux` 或 `Mobx` 等等，不过不管用哪个，你的代码都将变得越发庞大，需要学习的东西也越多（需要掌控和制定的规范也越来越多）。
+这时候你可以选择诸如 `useReducer`, `Redux` 或 `Mobx`
+等等，不过不管用哪个，你的代码都将变得越发庞大，需要学习的东西也越多（需要掌控和制定的规范也越来越多）。
 
 回到问题的本质，我们需要的，只是一个组合追踪而已，为什么要让事情变复杂？
 
-所以就有了这个 `useTheParams`，当你在为各种各样的 prop、state 疲于奔命时，用 `useTheParams` 就对了，一下子全解决了。
+所以就有了这个 `useTheParams`，当你在为各种各样的 prop、state 疲于奔命时，用
+`useTheParams` 就对了，一下子全解决了。
 
 **主要特性**
 
 - 泛型设计 - `useTheParams` 不锁定到底是数组还是 object，还是一个字符串，你传入什么，类型就是什么。
-- 可自定义 `compare` 方法，默认使用了 [just-compare](https://www.npmjs.com/package/just-compare)
+- 可自定义 `compare`
+  方法，默认使用了 [just-compare](https://www.npmjs.com/package/just-compare)
 - `onChange` 事件
 
 **基础用法**
@@ -192,10 +200,19 @@ function AnyComponent({ id }: AnyComponentProps) {
 }
 ```
 
-
 ## 更新日志
 
-### 1.0.3
+### 1.0.5
+
+- 更改项目构建环境为 bun.js
+- 切换 compare 函数为 `react-fast-compare`
+    - 导出 `compare` 函数
+    - `react-fast-compare` 打包构建包含
+- 调整 `esm => .mjs` （部分前端工具里对 mjs 识别有些问题）
+- `useTheParams` 调整实现
+- 测试代码适配 bun.js
+
+### 1.0.4
 
 - 增加 enum `LoaderState`
 - 部分流程优化
