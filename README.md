@@ -208,7 +208,7 @@ function AnyComponent({ id }: AnyComponentProps) {
 - 切换 compare 函数为 `react-fast-compare`
     - 导出 `compare` 函数
     - `react-fast-compare` 打包构建包含
-- 调整 `esm => .mjs` （部分前端工具里对 mjs 识别有些问题）
+- 调整 `esm => .mjs` （部分前端工具里对 esm js 识别有些问题）
 - `useTheParams` 调整实现
 - 测试代码适配 bun.js
 
