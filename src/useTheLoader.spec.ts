@@ -1,58 +1,68 @@
-import 'mocha';
-import { act, renderHook } from '@testing-library/react';
-import { assert } from 'chai';
-import { inject } from 'inject-jsdom';
+import { GlobalRegistrator } from '@happy-dom/global-registrator';
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { useState } from 'react';
 import { LoaderState, useTheLoader } from './useTheLoader';
 
-inject({
-  html: '<html lang="en"><body><div id="test" data-value="test"></div></body></html>',
-  url : 'http://localhost',
+beforeAll(() => {
+  // @ts-ignore
+  global.IS_REACT_ACT_ENVIRONMENT = true;
+  GlobalRegistrator.register();
+});
+
+afterAll(() => {
+  GlobalRegistrator.unregister();
 });
 
 type AnyRecord = Record<string, unknown>;
 
-const loaderDurationSeconds = 300;
-const itDurationSeconds = 500;
+const loaderDurationSeconds = 200;
+const itDurationSeconds = 300;
 
 type LoaderQuery = {
-  id: string,
-  err?: Error | string,
-  type?: string,
-}
+  id: string;
+  err?: Error | string;
+  type?: string;
+};
 
 type LoaderReturn<D extends AnyRecord> = {
+  query: LoaderQuery;
+  data?: D;
+  filter?: boolean;
+};
+
+const loader = <D extends AnyRecord>(
   query: LoaderQuery,
   data?: D,
-  filter?: boolean,
-}
+): Promise<LoaderReturn<D>> =>
+  new Promise((resolve, reject) =>
+    setTimeout(() => {
+      if (query.err) {
+        reject(query.err);
+      } else {
+        resolve({ query, data });
+      }
+    }, loaderDurationSeconds),
+  );
 
-const loader = <D extends AnyRecord>(query: LoaderQuery, data?: D): Promise<LoaderReturn<D>> => new Promise((resolve, reject) =>
-  setTimeout(() => {
-    if (query.err) {
-      reject(query.err);
-    } else {
-      resolve({ query, data });
-    }
-  }, loaderDurationSeconds),
-);
-
-describe('useTheLoader', function () {
-  describe('canLoad', function () {
-    it('canLoad#1', function () {
+describe('useTheLoader', () => {
+  describe('canLoad', () => {
+    it('canLoad#1', () => {
       const query = { id: 'ok' };
-      const { result } = renderHook(() => useTheLoader({
-        loader,
-        params : [query],
-        canLoad: false,
-      }));
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+          canLoad: false,
+        }),
+      );
 
-      assert.equal(result.current.state, LoaderState.init);
-      assert.equal(result.current.data, undefined);
-      assert.deepEqual(result.current.params, [query]);
+      expect(result.current.state).toBe(LoaderState.init);
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.params).toEqual([query]);
     });
 
-    it('canLoad#2', function () {
+    it('canLoad#2', () => {
       const query = { id: 'ok' };
       const { result } = renderHook(() => {
         const [canLoad, setCanLoad] = useState(false);
@@ -60,46 +70,54 @@ describe('useTheLoader', function () {
         return {
           ...useTheLoader({
             loader,
-            params : [query],
+            params: [query],
             canLoad: canLoad,
           }),
           setCanLoad,
         };
       });
-      assert.equal(result.current.state, LoaderState.init);
-      assert.equal(result.current.data, undefined);
-      assert.deepEqual(result.current.params, [query]);
+
+      expect(result.current.state).toBe(LoaderState.init);
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.params).toEqual([query]);
 
       act(() => {
         result.current.setCanLoad(true);
       });
 
-      assert.equal(result.current.state, LoaderState.loading);
+      expect(result.current.state).toBe(LoaderState.loading);
     });
 
-    it('canLoad params change', function () {
+    it('canLoad params change', () => {
+      const initValue = 'test';
       const { result } = renderHook(() => {
-        const [type, setType] = useState('test');
+        const [type, setType] = useState(initValue);
         return {
           ...useTheLoader({
             loader,
-            params : [{ id: 'ok', type }],
-            canLoad: ([q]) => q.type !== 'test',
+            params: [{ id: 'ok', type }],
+            canLoad: ([q]) => q.type !== initValue,
           }),
+          type,
           setType,
         };
       });
 
-      assert.equal(result.current.state, LoaderState.init);
+      expect(result.current.state).toBe(LoaderState.init);
+      expect(result.current.type).toBe(initValue);
+
+      const nextValue = 'ok';
 
       act(() => {
-        result.current.setType('ok');
+        result.current.setType(nextValue);
       });
 
-      assert.equal(result.current.state, LoaderState.loading);
+      expect(result.current.state).toBe(LoaderState.loading);
+      expect(result.current.type).toBe(nextValue);
+      expect(result.current.params).toEqual([{ id: 'ok', type: nextValue }]);
     });
 
-    it('canLoad params#2 change', function (done) {
+    it('canLoad params#2 change', (done) => {
       const query = { id: 'ok' };
       const changedData = { key: 'a-key' };
       const { result } = renderHook(() => {
@@ -107,48 +125,50 @@ describe('useTheLoader', function () {
         return {
           ...useTheLoader({
             loader,
-            params : [query, data],
+            params: [query, data],
             canLoad: ([, d]) => d != null,
           }),
           setData,
         };
       });
 
-      assert.equal(result.current.state, LoaderState.init);
+      expect(result.current.state).toBe(LoaderState.init);
 
       act(() => {
         result.current.setData(changedData);
       });
 
-      assert.equal(result.current.state, LoaderState.loading);
+      expect(result.current.state).toBe(LoaderState.loading);
 
       setTimeout(() => {
-        assert.equal(result.current.state,LoaderState.loaded);
-        assert.deepEqual(result.current.data, { query, data: changedData });
-        assert.deepEqual(result.current.params, [query, changedData]);
+        expect(result.current.state).toBe(LoaderState.loaded);
+        expect(result.current.data).toEqual({ query, data: changedData });
+        expect(result.current.params).toEqual([query, changedData]);
         done();
       }, itDurationSeconds);
     });
   });
 
-  describe('load', function () {
-    it('load', function (done) {
+  describe('load', () => {
+    it('load', (done) => {
       const query = { id: 'ok' };
-      const { result } = renderHook(() => useTheLoader({
-        loader,
-        params : [query],
-        canLoad: true,
-      }));
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+          canLoad: true,
+        }),
+      );
 
       setTimeout(() => {
-        assert.equal(result.current.state, LoaderState.loaded);
-        assert.deepEqual(result.current.data, { query, data: undefined });
-        assert.deepEqual(result.current.params, [query]);
+        expect(result.current.state).toBe(LoaderState.loaded);
+        expect(result.current.data).toEqual({ query, data: undefined });
+        expect(result.current.params).toEqual([query]);
         done();
       }, itDurationSeconds);
     });
 
-    it('load-reload', function (done) {
+    it('load-reload', (done) => {
       const basicId = 'ok';
       const changedId = 'yes';
       const { result } = renderHook(() => {
@@ -156,7 +176,7 @@ describe('useTheLoader', function () {
         return {
           ...useTheLoader({
             loader,
-            params : [{ id }],
+            params: [{ id }],
             canLoad: true,
           }),
           setId,
@@ -164,92 +184,113 @@ describe('useTheLoader', function () {
       });
 
       setTimeout(() => {
-        assert.equal(result.current.state, LoaderState.loaded);
-        assert.deepEqual(result.current.data, { query: { id: basicId }, data: undefined });
-        assert.deepEqual(result.current.params, [{ id: basicId }]);
+        expect(result.current.state).toBe(LoaderState.loaded);
+        expect(result.current.data).toEqual({
+          query: { id: basicId },
+          data: undefined,
+        });
+        expect(result.current.params).toEqual([{ id: basicId }]);
 
         act(() => {
           result.current.setId(changedId);
         });
 
-        assert.equal(result.current.loading, true);
-        assert.equal(result.current.reloading, true);
+        expect(result.current.loading).toBe(true);
+        expect(result.current.reloading).toBe(true);
 
         setTimeout(() => {
-          assert.equal(result.current.state, LoaderState.loaded);
-          assert.equal(result.current.loadTimes, 2);
-          assert.deepEqual(result.current.data, { query: { id: changedId }, data: undefined });
-          assert.deepEqual(result.current.params, [{ id: changedId }]);
+          expect(result.current.state).toBe(LoaderState.loaded);
+          expect(result.current.loadTimes).toBe(2);
+          expect(result.current.data).toEqual({
+            query: { id: changedId },
+            data: undefined,
+          });
+          expect(result.current.params).toEqual([{ id: changedId }]);
           done();
         }, itDurationSeconds);
       }, itDurationSeconds);
     });
 
-    it('load-error', function (done) {
+    it('load-error', (done) => {
       const err = new Error('loader error');
       const query = { id: 'ok', err };
-      const { result } = renderHook(() => useTheLoader({
-        loader,
-        params: [query],
-      }));
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+        }),
+      );
 
       setTimeout(() => {
-        assert.equal(result.current.state, LoaderState.error);
-        assert.deepEqual(result.current.error, err);
+        expect(result.current.state).toBe(LoaderState.error);
+        expect(result.current.error).toEqual(err);
         done();
       }, itDurationSeconds);
     });
 
-    it('load-error-string', function (done) {
+    it('load-error-string', (done) => {
       const err = 'loader error';
       const query = { id: 'ok', err };
-      const { result } = renderHook(() => useTheLoader({
-        loader,
-        params: [query],
-      }));
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+        }),
+      );
 
       setTimeout(() => {
-        assert.equal(result.current.state, LoaderState.error);
-        assert.deepEqual(result.current.error, new Error(err));
+        expect(result.current.state).toBe(LoaderState.error);
+        expect(result.current.error).toEqual(err);
         done();
       }, itDurationSeconds);
     });
 
-    it('load-beforeLoad', function (done) {
+    it('load-beforeLoad', (done) => {
       const query = { id: 'ok' };
       const type = 'new value';
-      const { result } = renderHook(() => useTheLoader({
-        loader,
-        params    : [query],
-        beforeLoad: ([q]) => {
-          q.type = type; // write args
-        },
-      }));
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+          beforeLoad: ([q]) => {
+            q.type = type; // write args
+          },
+        }),
+      );
 
       setTimeout(() => {
-        assert.equal(result.current.state, LoaderState.loaded);
+        expect(result.current.state).toBe(LoaderState.loaded);
         // 基础请求的参数，仍然是 query
-        assert.deepEqual(result.current.params, [query]);
+        expect(result.current.params).toEqual([query]);
         // 但返回的数据结果 query 加上了 beforeLoad 的数据
-        assert.deepEqual(result.current.data, { query: { ...query, type }, data: undefined });
+        expect(result.current.data).toEqual({
+          query: { ...query, type },
+          data: undefined,
+        });
         done();
       }, itDurationSeconds);
     });
 
-    it('load-filter', function (done) {
+    it('load-filter', (done) => {
       const query = { id: 'ok' };
-      const { result } = renderHook(() => useTheLoader({
-        loader,
-        params: [query],
-        filter: (d) => ({ ...d, filter: true }),
-      }));
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+          filter: (d) => ({ ...d, filter: true }),
+        }),
+      );
 
       setTimeout(() => {
-        assert.equal(result.current.state, LoaderState.loaded);
+        expect(result.current.state).toBe(LoaderState.loaded);
         // 基础请求的参数，仍然是 query
-        assert.deepEqual(result.current.params, [query]);
+        expect(result.current.params).toEqual([query]);
         // 但返回的数据结果 query 加上了 beforeLoad 的数据
-        assert.deepEqual(result.current.data, { query: query, data: undefined, filter: true });
+        expect(result.current.data).toEqual({
+          query: query,
+          data: undefined,
+          filter: true,
+        });
         done();
       }, itDurationSeconds);
     });

@@ -1,48 +1,52 @@
-import 'mocha';
-import { inject } from 'inject-jsdom';
-import { renderHook, act } from '@testing-library/react';
-import { assert } from 'chai';
+import { GlobalRegistrator } from '@happy-dom/global-registrator';
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { useState } from 'react';
 import { useTheParams } from './useTheParams';
 
-inject({
-  html: '<html><body><div id="test" data-value="test"></div></body></html>',
-  url : 'http://localhost',
+beforeAll(() => {
+  // @ts-ignore
+  global.IS_REACT_ACT_ENVIRONMENT = true;
+  GlobalRegistrator.register();
 });
 
-describe('useTheParams', function () {
-  describe('basic type test', function () {
-    it('object type', function () {
+afterAll(() => {
+  GlobalRegistrator.unregister();
+});
+
+describe('useTheParams', () => {
+  describe('basic type test', () => {
+    it('object type', () => {
       const params = { a: 'a', key: 123 };
       const { result } = renderHook(() => useTheParams(params));
 
-      assert.deepEqual(result.current[0], params);
+      expect(result.current[0]).toEqual(params);
     });
 
-    it('array type', function () {
+    it('array type', () => {
       const params = ['a', 'b', 'c'];
       const { result } = renderHook(() => useTheParams(params));
 
-      assert.deepEqual(result.current[0], params);
+      expect(result.current[0]).toEqual(params);
     });
 
-    it('string type', function () {
+    it('string type', () => {
       const params = 'test';
       const { result } = renderHook(() => useTheParams(params));
 
-      assert.equal(result.current[0], params);
+      expect(result.current[0]).toEqual(params);
     });
 
-    it('number type', function () {
+    it('number type', () => {
       const params = 123;
       const { result } = renderHook(() => useTheParams(params));
 
-      assert.equal(result.current[0], params);
+      expect(result.current[0]).toEqual(params);
     });
   });
 
-  describe('update', function () {
-    it('mixed', function () {
+  describe('update', () => {
+    it('mixed', () => {
       const basic = { id: 'id', keys: ['a', 'b', 'c'], boolean: false };
       const changed = { id: 'changed', keys: ['e', 'f', 'g'], boolean: true };
 
@@ -61,27 +65,30 @@ describe('useTheParams', function () {
         };
       });
 
-      assert.deepEqual(result.current.params, basic);
+      expect(result.current.params).toEqual(basic);
 
       act(() => {
         result.current.update();
       });
 
-      assert.deepEqual(result.current.params, changed);
+      expect(result.current.params).toEqual(changed);
     });
 
-    it('onChange', function () {
+    it('onChange', () => {
       const basic = { id: 'id' };
       const changed = { id: 'change-id' };
       let changedTimes = 0;
 
       const { result } = renderHook(() => {
         const [id, setId] = useState(basic.id);
-        const [params] = useTheParams({ id }, {
-          onChange: () => {
-            changedTimes++;
+        const [params] = useTheParams(
+          { id },
+          {
+            onChange: () => {
+              changedTimes++;
+            },
           },
-        });
+        );
         return {
           params,
           update: () => {
@@ -90,18 +97,18 @@ describe('useTheParams', function () {
         };
       });
 
-      assert.deepEqual(result.current.params, basic);
-      assert.equal(changedTimes, 0);
+      expect(result.current.params).toEqual(basic);
+      expect(changedTimes).toBe(0);
 
       act(() => {
         result.current.update();
       });
 
-      assert.deepEqual(result.current.params, changed);
-      assert.equal(changedTimes, 1);
+      expect(result.current.params).toEqual(changed);
+      expect(changedTimes).toBe(1);
     });
 
-    it('setParams', function () {
+    it('setParams', () => {
       const basic = ['id', 'abc', 1];
       const changed = ['change-id', 'efg', 2];
       let changedTimes = 0;
@@ -110,18 +117,18 @@ describe('useTheParams', function () {
         return useTheParams(basic, { onChange: () => changedTimes++ });
       });
 
-      assert.deepEqual(result.current[0], basic);
-      assert.equal(changedTimes, 0);
+      expect(result.current[0]).toEqual(basic);
+      expect(changedTimes).toBe(0);
 
       act(() => {
         result.current[1](changed);
       });
 
-      assert.deepEqual(result.current[0], changed);
-      assert.equal(changedTimes, 1);
+      expect(result.current[0]).toEqual(changed);
+      expect(changedTimes).toBe(1);
     });
 
-    it('setParams-callback', function () {
+    it('setParams-callback', () => {
       const id = 'id';
       const changeId = 'changed-id';
       const basic = { id, value: 'any-value' };
@@ -131,19 +138,20 @@ describe('useTheParams', function () {
         return useTheParams(basic, { onChange: () => changedTimes++ });
       });
 
-      assert.deepEqual(result.current[0], basic);
-      assert.equal(changedTimes, 0);
+      expect(result.current[0]).toEqual(basic);
+      expect(changedTimes).toBe(0);
 
       act(() => {
-        result.current[1](prev => ({ ...prev, id: changeId }));
+        result.current[1]((prev) => ({ ...prev, id: changeId }));
       });
 
-      assert.deepEqual(result.current[0], { ...basic, id: changeId });
-      assert.equal(changedTimes, 1);
+      expect(result.current[0]).toEqual({ ...basic, id: changeId });
+      expect(changedTimes).toBe(1);
     });
 
-    it('customCompare', function () {
-      const customCompare = (o1: unknown, o2: unknown): boolean => JSON.stringify(o1) === JSON.stringify(o2);
+    it('customCompare', () => {
+      const customCompare = (o1: unknown, o2: unknown): boolean =>
+        JSON.stringify(o1) === JSON.stringify(o2);
 
       const basic = ['id', 'abc', 1];
       const changed = ['change-id', 'efg', 2];
@@ -152,11 +160,13 @@ describe('useTheParams', function () {
         return useTheParams(basic, customCompare);
       });
 
-      assert.deepEqual(result.current[0], basic);
+      expect(result.current[0]).toEqual(basic);
+
       act(() => {
         result.current[1](changed);
       });
-      assert.deepEqual(result.current[0], changed);
+
+      expect(result.current[0]).toEqual(changed);
     });
   });
 });
