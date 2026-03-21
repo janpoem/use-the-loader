@@ -1,0 +1,38 @@
+# This workflow will publish package when tag pushed
+name: Package publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bun.js setup
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint check
+        run: bun run lint
+
+      - name: TypeScript Check
+        run: bun run ts-check
+
+      - name: Build sources
+        run: bun run build
+
+      - name: Run tests
+        run: bun test
+
+      - name: Publish package to NPM
+        run: bun publish --access public
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

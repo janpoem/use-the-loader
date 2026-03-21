@@ -34,6 +34,8 @@ export type UseTheLoaderOptions<
   onLoad?: (loadData: T, params: P) => void;
   onError?: (err: unknown) => void;
   filter?: (loadData: T) => T;
+  debug?: boolean;
+  debugParams?: boolean;
 };
 
 export enum LoaderState {
@@ -73,10 +75,13 @@ export function useTheLoader<
   onLoad,
   onError,
   beforeLoad,
+  debug,
+  debugParams,
 }: UseTheLoaderOptions<L, P, T>): UseTheLoaderReturn<T, P> {
   const [args, setParams] = useTheParams<P>(params, {
     compare,
     onChange: onChangeParams,
+    debug: debug || debugParams,
   });
 
   const shouldLoad = useMemo(() => {
@@ -111,6 +116,7 @@ export function useTheLoader<
         // @ts-ignore args
         const data = await loader(...cloneArgs);
         onLoad?.(data, cloneArgs);
+        debug && console.log('loader#loaded', data);
         stateRef.current = LoaderState.loaded;
         setLoadState({
           state: stateRef.current,
@@ -118,27 +124,40 @@ export function useTheLoader<
         });
       } catch (err) {
         onError?.(err);
+        debug && console.log('loader#error', err);
         stateRef.current = LoaderState.error;
         setLoadState({ state: stateRef.current, error: err });
       } finally {
         setLoadTimes((prev) => prev + 1);
       }
     },
-    [shouldLoad, args, loadState.state],
+    [
+      shouldLoad,
+      args,
+      loadState.state,
+      debug,
+      filter,
+      beforeLoad,
+      loader,
+      onLoad,
+      onError,
+    ],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!shouldLoad) return;
     if (stateRef.current === LoaderState.init) {
+      debug && console.log('loader#firstLoad', args);
       load();
     } else if (
       stateRef.current === LoaderState.loaded ||
       stateRef.current === LoaderState.error
     ) {
+      debug && console.log('loader#reload', args);
       load(true);
     }
-  }, [shouldLoad, args]);
+  }, [shouldLoad, args, debug]);
 
   return {
     ...loadState,

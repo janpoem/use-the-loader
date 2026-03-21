@@ -1,6 +1,6 @@
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { useState } from 'react';
 import { useTheParams } from './useTheParams';
 
@@ -167,6 +167,38 @@ describe('useTheParams', () => {
       });
 
       expect(result.current[0]).toEqual(changed);
+    });
+  });
+
+  describe('debug', () => {
+    it('debug mode logs (smoke test)', () => {
+      const basic = { id: 'id' };
+      const changed = { id: 'changed-id' };
+      const originalLog = console.log;
+      let logCalled = false;
+
+      console.log = (...args) => {
+        if (args[0] === 'useTheParams#change') {
+          logCalled = true;
+        }
+        originalLog(...args);
+      };
+
+      const { result } = renderHook(() => {
+        const [id, setId] = useState(basic.id);
+        const [params] = useTheParams({ id }, { debug: true });
+        return {
+          params,
+          update: () => setId(changed.id),
+        };
+      });
+
+      act(() => {
+        result.current.update();
+      });
+
+      console.log = originalLog;
+      expect(logCalled).toBe(true);
     });
   });
 });

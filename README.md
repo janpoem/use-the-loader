@@ -1,23 +1,26 @@
 # use-the-loader
 
-[![version](https://img.shields.io/npm/v/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
+[![version](https://img.shields.io/npm/v/use-the-loader?style=for-the-badge)](https://www.nnpmjs.com/package/use-the-loader)
 [![dw](https://img.shields.io/npm/dw/use-the-loader?style=for-the-badge)](https://www.npmjs.com/package/use-the-loader)
 
-又又又又双双双叒叒叕一个 React 的数据加载钩子。
+> Another React loader hook. Keep things simple.
 
 ## 设计理念
 
-**use-the-loader** 的设计概念是：将任何符合 `(...params: T) => Promise<R>` 描述的
-JS 函数视作一个 `loader`，并观测 `params` 的变化以触发 loader 自动重载。
+**use-the-loader** 设计理念非常简单：将任何 `(...params: T) => Promise<R>` 形式的 JS 函数视作一个 `loader`，并自动检测参数变化触发重载。
 
-- `loader` 函数根据实现函数，进行泛型推断
-- 其中 `...params: T` 将抽取为参数元祖（Tuple）
+- 完全通过 TypeScript 泛型自动推断类型，无需手动指定
+- 不关心你的数据来源（fetch/axios/graphql 都可以）
+- 不引入复杂的缓存机制和配置选项
+- 将接口实现的复杂性留在 loader 函数内部，保持组件代码简洁
+
+相比于那些重型的数据获取库，use-the-loader 坚信：**接口实现逻辑应该由专门的单元测试保证，组件层不需要承担额外的复杂度**。
 
 ```tsx
 import { useState } from 'react';
 import { useTheLoader } from './useTheLoader';
 
-// 输入参数：为元祖 [string, number]，因为 TS 的局限性，这个元祖是无法动态声明的，但通过泛型推断可以得到
+// 输入参数：[string, number]，自动推断
 // 返回结果：Promise<{id: string, version?: number}>
 const fetchData = (id: string, version?: number) => Promise.resolve({
   id,
@@ -27,9 +30,7 @@ const fetchData = (id: string, version?: number) => Promise.resolve({
 function TestComponent({ version }: { version?: number }) {
   const [id, setId] = useState('abc');
 
-  // 这里不需要额外的泛型指定，自动根据 fetchData 函数的推导推断出 params 的类型和 data 的类型
-  // params 必须符合 [string, number]，否则 ts-check 将会报错
-  // data 的推导类型则是 {id: string, version?: number} | undefined
+  // 自动推断类型：params 必须符合 [string, number]，data 类型是 {id: string, version?: number} | undefined
   const { data } = useTheLoader({
     loader: fetchData,
     params: [id, version],
@@ -39,47 +40,41 @@ function TestComponent({ version }: { version?: number }) {
 }
 ```
 
-接口实现的复杂性，不应该体现在 hooks 或者 view（组件代码） 层面，而应该由实现接口的函数负责。
-特别强烈批判诸如 `redux-toolkit` `useQuery` 搞的各种神神怪怪的机制和配置，
-让 hooks 或者 view（组件代码） 层面的代码变得越发复杂和臃肿。
+## 核心 API
 
-实际项目（经验）里，接口实现函数（类），我们可以有单独的单元测试、接口测试（或通过
-open-api 生成），确保可用性和健壮性。
+### `useTheLoader`
 
-**use-the-loader** 旨在用很薄一层的逻辑代码，将任何 JS 函数视作 loader ，并轻松用于
-hooks 或者 view（组件代码）。
+数据加载 Hook，关注由参数变化触发的数据加载。
 
-用更哲学的表述是：我们将任何 JS 异步函数抽象成 loader 以使用。
+```ts
+const { 
+  data,           // 加载的数据
+  state,          // LoaderState (init: 0, loading: 1, loaded: 2, error: 3)
+  error,          // 加载错误（unknown 类型）
+  loading,        // 是否正在加载中
+  reloading,      // 是否正在重新加载（第一次加载后）
+  loadTimes,      // 已加载次数
+  params,         // 当前参数
+  setParams,      // 直接设置参数
+  load,           // 手动触发加载 (reload?: boolean) => Promise<void>
+} = useTheLoader({
+  loader,         // 加载函数 (...args) => Promise<T>
+  params,         // 参数数组，必须与 loader 签名对应
+  onChangeParams, // 可选：参数变化回调 (params: P) => void
+  compare,        // 可选：自定义参数比较函数 (v1, v2) => boolean
+  canLoad,        // 可选：是否允许加载 boolean | ((params: P) => boolean)
+  beforeLoad,     // 可选：加载前回调 (params: P) => void | Promise<void>
+  onLoad,         // 可选：加载成功回调 (data: T, params: P) => void
+  onError,        // 可选：加载失败回调 (err: unknown) => void
+  filter,         // 可选：数据过滤 (data: T) => T
+  debug,          // 可选：开启 debug 日志
+  debugParams,    // 可选：开启 params 变化日志
+});
+```
 
-> 大道至简，各方妖孽速速退散
+**完整示例：**
 
-该库提供两个基础的 hooks：
-
-- useTheLoader - 关注由 params 变化触发的数据加载（不限制如何实现 loader）。
-- useTheParams - 将多个任意的 prop 、state 、变量，构建成一个参数组合，并跟踪该参数的变化。
-
-## useTheLoader
-
-又又又一个 React 的数据加载钩子。
-
-- 不关注如何缓存
-- 不关注如何实现（到底是 fetch 还是 axios，还是 graphql，还是啥）
-- 只需要一个 `loader` 函数
-- 以及 `loader` 函数的参数 `params`
-
-`useTheLoader` 提供：
-
-- 泛型设计，准确定位（编辑器可智能识别，自动提示） `loader`、`loader` 参数，`loader` 的
-  `Promise<infer T>`
-- 根据 `params` 变化，自动 reload
-- 可控 `canLoad(params)`
-- 前置 `beforeLoad(params)` ，以修正实际 loader 的参数
-- 后置 `onLoad(data, params)`，以便于对数据分割处理
-- 过滤器 `filter(data)` ，以便于数据加工过滤
-
-**基础用法**
-
-```typescript jsx
+```tsx
 import { useSearch } from '@tanstack/react-location';
 import { useState } from 'react';
 import { axios } from 'axios';
@@ -89,23 +84,19 @@ type LoaderQuery = {
   type?: string,
   page?: number,
   search?: string,
-}
+};
 
 type LoaderData = {
   data: Record<string, unknown>,
   otherInfo?: Record<string, unknown>,
-  filtered?: boolean,
-}
+};
 
-const loader = (id: string, query: LoaderQuery): Promise<LoaderData> => new Promise<LoaderData>((resolve, reject) => {
-  axios.request({ url: '....' })
-    .then(resp => resolve(resp.data))
-    .catch(err => reject(err));
-})
+const loader = (id: string, query: LoaderQuery): Promise<LoaderData> => 
+  axios.get(`/api/data/${id}`, { params: query });
 
 type AnyComponentProps = {
   id?: string,
-}
+};
 
 function AnyComponent({ id }: AnyComponentProps) {
   // Router 的 url 查询字符串变量
@@ -115,23 +106,21 @@ function AnyComponent({ id }: AnyComponentProps) {
 
   const [otherInfo, setOtherInfo] = useState<Record<string, unknown> | undefined>(undefined);
 
-  const { state, data, loading, reloading, } = useTheLoader({
-    // 必须，loader 本体，决定了 params 参数的类型以及 data 的类型
+  const { data, loading, error } = useTheLoader({
+    // 必须：loader 本体
     loader: loader,
-    // 必须，参数构成
+    // 必须：参数构成，必须和 loader 签名一致
     params: [id, { type, page, search }],
-    // 可选，是否可加载，不指定时，默认为 true
+    // 可选：控制是否可加载
     canLoad: () => id != null,
-    // 可选，加载数据前
+    // 可选：加载前处理参数
     beforeLoad: ([, q]) => {
       q.type = q.type == null ? '' : q.type;
     },
-    // 可选，加载数据后
+    // 可选：加载后处理结果
     onLoad: (d) => {
       setOtherInfo(d.otherInfo);
     },
-    // 可选，对加载的数据进行过滤
-    filter: (d) => ({ ...d, filtered: true })
   });
 
   // 组件输出 ...
@@ -139,86 +128,146 @@ function AnyComponent({ id }: AnyComponentProps) {
 }
 ```
 
-注意：当 loader 处于 loading 状态（未加载完毕）时，params 变化不会触发数据 reload。
+### `useTheParams`
 
-## useTheParams
+参数组合 Hook，当你需要组合多个变量并检测变化时使用。
 
-本来 React 的 `useState` 是一个十分简单且美妙的东西，我们总是乐于从基础的 state
-去构建组件或 hook。
+```ts
+const [params, setParams] = useTheParams(
+  input,                // 需要组合的参数（可以是 object | array | 基本类型）
+  {
+    onChange: (p) => {}, // 可选：变化回调
+    compare: (v1, v2) => v1 === v2, // 可选：自定义比较函数
+    debug: false,        // 可选：开启 debug 日志
+  }
+);
+```
 
-但不可避免的是多个属性（prop）或state，需要做组合，成为一个数组或object，再关注这个组合的变化，去触发下一层的操作。
+**基本用法：**
 
-这时候基于 `useEffect`，总是力有不逮（浅层比较深度不足，逻辑越做越复杂）。
-
-这时候你可以选择诸如 `useReducer`, `Redux` 或 `Mobx`
-等等，不过不管用哪个，你的代码都将变得越发庞大，需要学习的东西也越多（需要掌控和制定的规范也越来越多）。
-
-回到问题的本质，我们需要的，只是一个组合追踪而已，为什么要让事情变复杂？
-
-所以就有了这个 `useTheParams`，当你在为各种各样的 prop、state 疲于奔命时，用
-`useTheParams` 就对了，一下子全解决了。
-
-**主要特性**
-
-- 泛型设计 - `useTheParams` 不锁定到底是数组还是 object，还是一个字符串，你传入什么，类型就是什么。
-- 可自定义 `compare`
-  方法，默认使用了 [just-compare](https://www.npmjs.com/package/just-compare)
-- `onChange` 事件
-
-**基础用法**
-
-```typescript jsx
+```tsx
 import { useSearch } from '@tanstack/react-location';
 import { useState } from 'react';
 import { useTheParams } from 'use-the-loader';
 
-type AnyComponentProps = {
-  id?: string,
-}
-
-function AnyComponent({ id }: AnyComponentProps) {
-  // Router 的 url 查询字符串变量
+function AnyComponent({ id }: { id?: string }) {
   const { page, search } = useSearch();
-  // 组件内 state
   const [type, setType] = useState('user');
 
-  const [params, setParams] = useTheParams(
-    // 构成 params 的数据，
-    // 当这些数据变动时，将自动触发 params onChange
+  const [params] = useTheParams(
     { id, type, page, search },
     {
       onChange: (p) => {
-        // 当 params 变化时触发
+        // params 变化时触发
       },
-      // 自定义比较函数
-      compare: (v1, v2) => v1 === v2,
     }
   );
 
-  // 组件输出 ...
   return <div>AnyComponent</div>;
 }
 ```
 
-## 更新日志
+## 设计哲学
 
-### 1.0.6
+大道至简，为什么要发明一堆概念和配置来解决一个简单问题？
 
-- 切换回 `just-compare`
+现在很多 React 生态中的数据获取库把简单问题复杂化：
 
-### 1.0.5
+- 要学习大量配置选项：queryKey、staleTime、cacheTime、retry、refetchOnWindowFocus...
+- 要理解复杂的缓存策略
+- 要记住各种边边角角的规则
 
-- 更改项目构建环境为 bun.js
-- 切换 compare 函数为 `react-fast-compare`
-    - 导出 `compare` 函数
-    - `react-fast-compare` 打包构建包含
-- 调整 `esm => .mjs` （部分前端工具里对 esm js 识别有些问题）
-- `useTheParams` 调整实现
-- 测试代码适配 bun.js
+而实际上，大多数场景下我们需要的仅仅是：**当参数变化了，重新调用一次接口**。
 
-### 1.0.4
+use-the-loader 的核心就是这句话，它：
 
-- 增加 enum `LoaderState`
-- 部分流程优化
-- 增加导出 `esm` ，调整 `esm => .js`、`cjs => .cjs` 后缀格式
-- 更新 rollup 编译环境，改用 `rollup-plugin-swc3` 和 `rollup-plugin-dts`
+- **不**绑定特定的 HTTP 客户端
+- **不**做任何缓存（你可以在上游轻松实现）
+- **不**提供复杂的重试机制（用 ts-utils 的 `retry` 包装 loader 即可）
+- **不**要求你遵循特定的项目结构
+
+只需要记住：`loader` 就是个异步函数，参数变化会自动重跑。就这么简单。
+
+## 安装
+
+```bash
+npm install use-the-loader
+# or
+yarn add use-the-loader
+# or
+bun add use-the-loader
+```
+
+## 类型说明
+
+- `error` 类型保持 `unknown`，遵循 TypeScript 官方做法。你可以使用类型守卫来判断：
+
+```ts
+if (error instanceof Error) {
+  // error 是 Error 类型
+  console.log(error.message);
+}
+```
+
+## 调试
+
+开启 `debug: true` 后，控制台会输出以下日志：
+
+- `loader#firstLoad` - 首次加载
+- `loader#reload` - 参数变化触发重载
+- `loader#loaded` - 加载完成
+- `loader#error` - 加载出错
+
+开启 `debugParams: true`（或 `debug: true`）后，`useTheParams` 会输出参数变化日志。
+
+## 常见问题
+
+### 为什么不内置缓存/重试/防抖？
+
+这些横切关注点应该在上游通过函数组合解决：
+
+```ts
+import { retry, timeout } from '@your-org/async-utils';
+
+const { data } = useTheLoader({
+  // 通过函数组合包装 loader，添加重试和超时
+  loader: timeout(retry(fetchData, { attempts: 3 }), 5000),
+  params: [id],
+});
+```
+
+这样更加灵活，use-the-loader 不需要关心这些细节。
+
+### `canLoad` 的用途？
+
+当某些参数还没准备好时，可以通过 `canLoad: false` 推迟加载：
+
+```ts
+const { data } = useTheLoader({
+  loader: fetchUser,
+  params: [userId],
+  canLoad: !!userId, // 只有 userId 存在时才加载
+});
+```
+
+### `beforeLoad` 的用途？
+
+可以在加载前修改参数，比如设置默认值：
+
+```ts
+const { data } = useTheLoader({
+  loader: fetchData,
+  params: [id, type],
+  beforeLoad: ([id, q]) => {
+    q.type = q.type || 'default';
+  },
+});
+```
+
+## License
+
+MIT
+
+## 相关项目
+
+- [ts-utils](https://github.com/janpoem/ts-utils) - 你正在使用的 TypeScript 工具库，包含 `retry`、`timeout` 等异步工具

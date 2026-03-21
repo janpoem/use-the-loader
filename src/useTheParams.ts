@@ -12,16 +12,18 @@ import { type CompareFunction, compare } from './compare';
 export type UseTheParamsOptions<P> = {
   compare?: CompareFunction;
   onChange?: (next: P) => void;
+  debug?: boolean;
 };
 
 export function useTheParams<P>(
   input: P,
   opts?: CompareFunction | UseTheParamsOptions<P>,
 ): [P, Dispatch<SetStateAction<P>>] {
-  const { compare: userCompareFn, onChange } = useMemo(
-    () => initOptions(opts),
-    [opts],
-  );
+  const {
+    compare: userCompareFn,
+    onChange,
+    debug,
+  } = useMemo(() => initOptions(opts), [opts]);
 
   // don't change by user compare function change
   const compareRef = useRef(userCompareFn ?? compare);
@@ -33,10 +35,12 @@ export function useTheParams<P>(
 
   useEffect(() => {
     if (!compareRef.current(ref.current, input)) {
+      debug &&
+        console.log('useTheParams#change', { prev: ref.current, next: input });
       ref.current = input;
       setVer((prev) => prev + 1);
     }
-  }, [input]);
+  }, [input, debug]);
 
   useEffect(() => {
     if (verRef.current !== ver) {

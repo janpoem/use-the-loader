@@ -1,6 +1,6 @@
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { useState } from 'react';
 import { LoaderState, useTheLoader } from './useTheLoader';
 
@@ -291,6 +291,64 @@ describe('useTheLoader', () => {
           data: undefined,
           filter: true,
         });
+        done();
+      }, itDurationSeconds);
+    });
+
+    it('onError called on error', (done) => {
+      const query = { id: 'ok', err: new Error('test') };
+      let errorCalled = false;
+      let capturedError: unknown = null;
+
+      const { result } = renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+          onError: (err) => {
+            errorCalled = true;
+            capturedError = err;
+          },
+        }),
+      );
+
+      setTimeout(() => {
+        expect(result.current.state).toBe(LoaderState.error);
+        expect(result.current.error).toBeInstanceOf(Error);
+        // error is unknown, check type guard
+        if (result.current.error instanceof Error) {
+          expect(result.current.error.message).toBe('test');
+        }
+        expect(errorCalled).toBe(true);
+        expect(capturedError).toBe(result.current.error);
+        done();
+      }, itDurationSeconds);
+    });
+  });
+
+  describe('debug', () => {
+    it('debug mode logs (smoke test)', (done) => {
+      const query = { id: 'ok' };
+      const originalLog = console.log;
+      let logCalled = false;
+
+      console.log = (...args) => {
+        if (args[0] === 'loader#firstLoad' || args[0] === 'loader#loaded') {
+          logCalled = true;
+        }
+        originalLog(...args);
+      };
+
+      renderHook(() =>
+        useTheLoader({
+          loader,
+          params: [query],
+          debug: true,
+        }),
+      );
+
+      setTimeout(() => {
+        console.log = originalLog;
+        expect(logCalled).toBe(true);
         done();
       }, itDurationSeconds);
     });
