@@ -1,6 +1,6 @@
 {
   "name": "use-the-loader",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Another React loader hook.",
   "keywords": [
     "loader",
@@ -19,7 +19,9 @@
     "rollup": "bunx --bun rollup -c rollup.config.ts",
     "build": "bun run all-check && bun run rollup"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
