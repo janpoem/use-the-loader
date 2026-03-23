@@ -17,6 +17,7 @@
     "lint": "biome lint --error-on-warnings ./src",
     "all-check": "bun run lint && bun run ts-check && bun run test",
     "rollup": "bunx --bun rollup -c rollup.config.ts",
+    "rollup:watch": "bunx --bun rollup -c rollup.config.ts --watch --watch.include '/src/**/*'",
     "build": "bun run all-check && bun run rollup"
   },
   "files": [

@@ -10,30 +10,23 @@ import {
 import type { CompareFunction } from './compare';
 import { useTheParams } from './useTheParams';
 
-// @ts-ignore args P
-// biome-ignore lint/suspicious/noExplicitAny: args P
-export type LoaderFunc<T = any, P = any> = (...args: P) => Promise<T>;
-// biome-ignore lint/suspicious/noExplicitAny: args P
-export type LoaderReturn<L> = L extends LoaderFunc<infer T, any> ? T : unknown;
-// biome-ignore lint/suspicious/noExplicitAny: args P
-export type LoaderArgs<L> = L extends LoaderFunc<any, infer P> ? P : unknown;
+// biome-ignore lint/suspicious/noExplicitAny: generic function type requires any
+export type AnyFn = (...args: any[]) => any;
 
 type BeforeLoadReturn = unknown;
 
-export type UseTheLoaderOptions<
-  L extends LoaderFunc,
-  P extends LoaderArgs<L>,
-  T extends LoaderReturn<L>,
-> = {
+export type UseTheLoaderOptions<L extends AnyFn> = {
   loader: L;
-  params: P;
-  onChangeParams?: (params: P) => void;
+  params: Parameters<L>;
+  onChangeParams?: (params: Parameters<L>) => void;
   compare?: CompareFunction;
-  canLoad?: boolean | ((params: P) => boolean);
-  beforeLoad?: (params: P) => BeforeLoadReturn | Promise<BeforeLoadReturn>;
-  onLoad?: (loadData: T, params: P) => void;
+  canLoad?: boolean | ((params: Parameters<L>) => boolean);
+  beforeLoad?: (
+    params: Parameters<L>,
+  ) => BeforeLoadReturn | Promise<BeforeLoadReturn>;
+  onLoad?: (loadData: Awaited<ReturnType<L>>, params: Parameters<L>) => void;
   onError?: (err: unknown) => void;
-  filter?: (loadData: T) => T;
+  filter?: (loadData: Awaited<ReturnType<L>>) => Awaited<ReturnType<L>>;
   debug?: boolean;
   debugParams?: boolean;
 };
@@ -51,21 +44,21 @@ export type LoadState<T> = {
   error?: unknown;
 };
 
-export type UseTheLoaderReturn<T, P> = LoadState<T> & {
+export type UseTheLoaderReturn<L extends AnyFn> = LoadState<
+  Awaited<ReturnType<L>>
+> & {
   loading: boolean;
   reloading: boolean;
   loadTimes: number;
   setLoadTimes: Dispatch<SetStateAction<number>>;
   load: (reload?: boolean) => Promise<void>;
-  params: P;
-  setParams: (p: P | ((p: P) => P)) => void;
+  params: Parameters<L>;
+  setParams: (
+    p: Parameters<L> | ((p: Parameters<L>) => Parameters<L>),
+  ) => void;
 };
 
-export function useTheLoader<
-  L extends LoaderFunc,
-  P extends LoaderArgs<L>,
-  T extends LoaderReturn<L>,
->({
+export function useTheLoader<L extends AnyFn>({
   loader,
   params,
   onChangeParams,
@@ -77,7 +70,10 @@ export function useTheLoader<
   beforeLoad,
   debug,
   debugParams,
-}: UseTheLoaderOptions<L, P, T>): UseTheLoaderReturn<T, P> {
+}: UseTheLoaderOptions<L>): UseTheLoaderReturn<L> {
+  type P = Parameters<L>;
+  type T = Awaited<ReturnType<L>>;
+
   const [args, setParams] = useTheParams<P>(params, {
     compare,
     onChange: onChangeParams,
@@ -111,10 +107,9 @@ export function useTheLoader<
       stateRef.current = LoaderState.loading;
       setLoadState((prev) => ({ ...prev, state: stateRef.current }));
       try {
-        const cloneArgs = args.slice();
+        const cloneArgs = [...args] as P;
         await beforeLoad?.(cloneArgs);
-        // @ts-ignore args
-        const data = await loader(...cloneArgs);
+        const data: T = await loader(...cloneArgs);
         onLoad?.(data, cloneArgs);
         debug && console.log('loader#loaded', data);
         stateRef.current = LoaderState.loaded;
