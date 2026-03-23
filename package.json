@@ -1,6 +1,6 @@
 {
   "name": "use-the-loader",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Another React loader hook.",
   "keywords": [
     "loader",
